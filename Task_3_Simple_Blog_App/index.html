@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Blog App</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: #2c3e50;
+            font-size: 2.2rem;
+        }
+
+        /* Form Styling */
+        .post-form-card {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .post-form-card h2 {
+            margin-bottom: 15px;
+            color: #34495e;
+            font-size: 1.4rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            height: 120px;
+        }
+
+        .btn-submit {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background 0.2s ease;
+        }
+
+        .btn-submit:hover {
+            background-color: #2980b9;
+        }
+
+        /* Blog Feed Styling */
+        .posts-section h2 {
+            margin-bottom: 15px;
+            color: #34495e;
+            font-size: 1.4rem;
+        }
+
+        .post-card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .post-card h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .post-card .post-date {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+
+        .post-card p {
+            color: #555;
+            white-space: pre-wrap; /* Preserves line breaks in post content */
+        }
+
+        .btn-delete {
+            margin-top: 15px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s ease;
+        }
+
+        .btn-delete:hover {
+            background-color: #c0392b;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #95a5a6;
+            padding: 30px;
+            background: #fff;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Simple Blog Application</h1>
+        </header>
+
+        <!-- Create Post Section -->
+        <div class="post-form-card">
+            <h2>Create a New Post</h2>
+            <form id="blogForm">
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" id="title" placeholder="Enter post title..." required>
+                </div>
+                <div class="form-group">
+                    <label for="content">Content</label>
+                    <textarea id="content" placeholder="Write your content here..." required></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Publish Post</button>
+            </form>
+        </div>
+
+        <!-- Display Posts Section -->
+        <div class="posts-section">
+            <h2>Recent Blog Posts</h2>
+            <div id="postsContainer">
+                <!-- Blog posts will be rendered here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Key used for saving data in browser localStorage
+        const STORAGE_KEY = 'saiket_blog_posts';
+
+        // DOM Element Selectors
+        const blogForm = document.getElementById('blogForm');
+        const titleInput = document.getElementById('title');
+        const contentInput = document.getElementById('content');
+        const postsContainer = document.getElementById('postsContainer');
+
+        // Fetch posts from local storage or initialize empty array
+        function getPostsFromStorage() {
+            const posts = localStorage.getItem(STORAGE_KEY);
+            return posts ? JSON.parse(posts) : [];
+        }
+
+        // Save updated posts array back to local storage
+        function savePostsToStorage(posts) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+        }
+
+        // Render posts dynamically to the DOM
+        function renderPosts() {
+            const posts = getPostsFromStorage();
+            postsContainer.innerHTML = '';
+
+            if (posts.length === 0) {
+                postsContainer.innerHTML = '<div class="empty-state">No blog posts available yet. Create your first post above!</div>';
+                return;
+            }
+
+            posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.className = 'post-card';
+                postElement.innerHTML = `
+                    <h3>${escapeHTML(post.title)}</h3>
+                    <div class="post-date">Published on: ${post.date}</div>
+                    <p>${escapeHTML(post.content)}</p>
+                    <button class="btn-delete" onclick="deletePost(${post.id})">Delete Post</button>
+                `;
+                postsContainer.appendChild(postElement);
+            });
+        }
+
+        // Handle Form Submission (Create Post)
+        blogForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+
+            if (!title || !content) return;
+
+            const newPost = {
+                id: Date.now(), // Unique ID based on timestamp
+                title: title,
+                content: content,
+                date: new Date().toLocaleString()
+            };
+
+            const posts = getPostsFromStorage();
+            posts.unshift(newPost); // Add new post to top of list
+            savePostsToStorage(posts);
+
+            // Reset Form and Update View
+            blogForm.reset();
+            renderPosts();
+        });
+
+        // Function to delete a post by its ID
+        function deletePost(id) {
+            let posts = getPostsFromStorage();
+            posts = posts.filter(post => post.id !== id);
+            savePostsToStorage(posts);
+            renderPosts();
+        }
+
+        // Helper function to sanitize user input against XSS vulnerabilities
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        // Initial render when script loads
+        document.addEventListener('DOMContentLoaded', renderPosts);
+    </script>
+</body>
+</html>
